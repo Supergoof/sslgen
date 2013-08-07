@@ -1,5 +1,4 @@
 <?php
-
 // http://php.net/manual/en/features.file-upload.errors.php
 $error_types = array( 
 	0=>"There is no error, the file uploaded with success", 
