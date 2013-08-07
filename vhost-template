@@ -1,0 +1,16 @@
+<VirtualHost *:443>
+#	CreateDate
+
+	ServerName template-commonname
+	<Proxy *>
+	        Order deny,allow
+	        Allow from all
+	</Proxy>
+	        SSLProxyEngine on
+	        SSLEngine on
+	        SSLCertificateFile /etc/apache2/ssl-certs/template-foldername/template-certname
+	        SSLCertificateKeyFile /etc/apache2/ssl-certs/template-foldername/template-keyname
+	        SetEnvIf User-Agent ".*MSIE.*" nokeepalive ssl-unclean-shutdown
+		ProxyPass / template-proxysite-url
+	        ProxyPassReverse / template-proxysite-url
+</VirtualHost>

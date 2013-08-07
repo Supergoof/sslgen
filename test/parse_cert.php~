@@ -1,0 +1,50 @@
+<?php
+$testcert = file_get_contents("certs/STAR_dandomain_dk.cer");
+display_crt_info($testcert);
+
+function display_crt_info( $crt )       // display some certificate info
+{
+  if ( $data = openssl_x509_parse($crt) ) {
+    // print_r($data);
+    //subject
+    $C = $data['subject']['C'];
+    $ST = $data['subject']['ST'];
+    $L = $data['subject']['L'];
+    $O = $data['subject']['O'];
+    $OU = $data['subject']['OU'];
+    $CN = $data['subject']['CN'];
+    $emailAddress = $data['subject']['emailAddress'];
+    //issuer
+    $iC = $data['issuer']['C'];
+    $iST = $data['issuer']['ST'];
+    $iL = $data['issuer']['L'];
+    $iO = $data['issuer']['O'];
+    $iOU = $data['issuer']['OU'];
+    $iCN = $data['issuer']['CN'];
+    $iemailAddress = $data['issuer']['emailAddress'];
+    // the rest
+    $version = $data['version'];
+    $serial = $data['serialNumber'];
+    $validFrom = date('Y-m-d H:i:s', $data['validFrom_time_t']);
+    $validTo = date('Y-m-d H:i:s', $data['validTo_time_t']);
+    $altnames = ( isset($data["extensions"]["subjectAltName"]) ? $data["extensions"]["subjectAltName"] : "None" );
+    echo "<br />----------Cert Info-------------------------<br />";
+    echo "CommonName: " . $CN . "<br />";
+    echo "Country: " . $C . "<br />";
+    echo "State: " . $ST . "<br />";
+    echo "Locality: " . $L . "<br />";
+    echo "Organization: " . $O . "<br />";
+    echo "Org. Unit: " . $OU . "<br />";
+    echo "Email Address: " . $emailAddress . "<br />";
+    echo "Subject Alternative Names: " . $altnames . "<br />";
+    echo "Valid From: " .$validFrom . "<br />";
+    echo "Valid To: " . $validTo . "<br />";
+    echo "----------Issuer---------------------------<br />";
+    echo "Issuer Organization: " . $iO . "<br />";
+    echo "Issuer Country: " . $iC . "<br />";
+    echo "<hr>";
+  } else {
+    echo "ERROR. could not parse cert <br />".$crt;
+  }
+}
+?>
