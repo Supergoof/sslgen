@@ -37,7 +37,8 @@ if (isset($_FILES["zip_file"]) && ($_FILES["zip_file"]["error"] == "0") && isset
 	$template		= "vhost-template";
 	$template_out_path	= "create-vhost";
 	$pendingCertID		= $_POST["pendingCertID"];
-	$certfile		= unset($certfile); // Clear the sucker
+	$sslproxy_url		= $_POST["proxyurl"];
+	$certfile		= ""; // Clear the sucker
 
 	echo "<pre>";
 	if ($DEBUG) echo "PendingCertID: " .$_POST["pendingCertID"]. "<br />";
@@ -56,7 +57,7 @@ if (isset($_FILES["zip_file"]) && ($_FILES["zip_file"]["error"] == "0") && isset
 	if (in_array($real_type, $accepted_types) && ($size < $max_size) && in_array($extension, $allowedExts)) {
 		if ($DEBUG) echo "Hooray, the file passed mime type, size and ext validation!<br />";
 		if (file_exists($target_path . $name)) {
-		        echo $name . " already exists. <br />";
+		        echo "ERROR: " . $name . " already exists. <br />";
 		} else {
 		        if (move_uploaded_file($tmp_file, $target_path . $name)) {
 		                if ($DEBUG) echo "Stored in: " . $target_path . $name . "<br />";
@@ -64,10 +65,9 @@ if (isset($_FILES["zip_file"]) && ($_FILES["zip_file"]["error"] == "0") && isset
                                 $za = new ZipArchive();
                                 $za->open($target_path.$name, ZipArchive::CHECKCONS);
                                 if ($za == TRUE) {
-                                        if ($DEBUG) echo "Zipfile opened<br />";
-                                        if ($DEBUG) echo "Zipfile contains ".$za->numFiles." files<br />";
+                                        echo "Zipfile opened<br />";
+                                        echo "Zipfile contains ".$za->numFiles." files<br />";
                                         for($i = 0; $i < $za->numFiles; $i++) {   
-                                                echo '   '.$za->getNameIndex($i) . '<br />';
                                                 // Guess the certificate file
                                                 if ($za->getNameIndex($i) == $prefix.".cer") {
                                                         $certfile = $za->getNameIndex($i);
@@ -76,9 +76,10 @@ if (isset($_FILES["zip_file"]) && ($_FILES["zip_file"]["error"] == "0") && isset
                                                         $certfile = $za->getNameIndex($i);
                                                         echo "Guessing that the cert file is: " . $certfile . "<br />";
                                                 }
+                                                if ($DEBUG) echo '   '.$za->getNameIndex($i).'<br />';
                                         }
                                         // Check if we found a cert
-                                        if ( !isset($certfile) ) {
+                                        if ( empty($certfile) ) {
                                                echo "Could not guess the cert filename!<br />Tried ".$prefix.".cer and ".$prefix.".crt<br />";
                                                exit;
                                         }
@@ -128,9 +129,9 @@ if (isset($_FILES["zip_file"]) && ($_FILES["zip_file"]["error"] == "0") && isset
 	// Now we have a valid cert, we check if we should create a vhost for it on this server
 	if (isset($_POST['createvhost']) && $_POST['createvhost'] == 'yes') 
 	{
-	  echo "Create vhost";
+	  echo "Creating vhost...";
 	  // Create(prepare) the vhost from the template
-	  $sslproxy_url = "http://hyltvejdk.bsd03.dandomain.dk"; //testdata
+	  //$sslproxy_url = "http://hyltvejdk.bsd03.dandomain.dk"; //testdata
 	  if (!create_vhost($prefix,$template,$target_path,$template_out_path, $sslproxy_url)) {
 	    echo "<br />ERROR: creating vhost!";
 	  }
@@ -441,6 +442,11 @@ function create_vhost($prefix, $vhost_template_file, $base_dir, $out_dir, $proxy
   $vhost_tpl_out = $out_dir."/".$prefix.".conf";
   $key_file = $cert_folder."/".$prefix.".key";
   $proxy_url = trim($proxy_url);
+  
+  if ( empty($proxy_url)) {
+    echo "<br />ERROR:create_vhost proxy_url is empty !";
+    return false;
+  }
 
   if ( (filter_var($proxy_url, FILTER_VALIDATE_URL) == false) && ( (substr($proxy_url,0,7) == "http://") || (substr($proxy_url,0,8) == "https://") ) ) {
     echo "<br />ERROR:create_vhost proxy_url is not a valid URL !";

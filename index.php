@@ -87,9 +87,13 @@ $stmt->bind_result($id, $cn, $kanonr);
     </li>
     <li>
       <label for="createvhost">Create vhost:<span class="small">Create vhost on <?php echo $_SERVER['SERVER_NAME'] ?></span></label>
-      <input type="checkbox" name="createvhost" id="createvhost" value="yes" align="">
+      <input type="checkbox" name="createvhost" id="createvhost" value="yes">
+    </li><br />
+     <li>
+      <label for="proxyurl">Proxy URL:<span class="small">URL to proxy (only with Create vhost)</span></label>
+      <input class="jq_watermark" type="text" title="HTTP://u12345.nixweb99.dandomain.dk" name="proxyurl" size="38">
     </li>
-  <ol>
+  </ol>
   <br />
   <input type=submit name="upload" value="Upload">
   </form>
