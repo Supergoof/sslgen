@@ -1,5 +1,4 @@
 <?php
-
 // http://php.net/manual/en/features.file-upload.errors.php
 $error_types = array( 
 	0=>"There is no error, the file uploaded with success", 
@@ -436,7 +435,7 @@ function create_vhost($prefix, $vhost_template_file, $base_dir, $out_dir, $proxy
   $vhost_tpl_out = $out_dir."/".$prefix.".conf";
   $key_file = $cert_folder."/".$prefix.".key";
   $proxy_url = trim($proxy_url);
-  echo "<br />1:".substr($proxy_url,0,8)."<br />";
+
   if ( (filter_var($proxy_url, FILTER_VALIDATE_URL) == false) && ( (substr($proxy_url,0,7) == "http://") || (substr($proxy_url,0,8) == "https://") ) ) {
     echo "<br />ERROR:create_vhost proxy_url is not a valid URL !";
     echo "<br /> - $proxy_url ";

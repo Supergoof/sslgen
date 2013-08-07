@@ -1,4 +1,5 @@
 <?php
+$DEBUG = false;
 // http://php.net/manual/en/features.file-upload.errors.php
 $error_types = array( 
 	0=>"There is no error, the file uploaded with success", 
@@ -36,34 +37,35 @@ if (isset($_FILES["zip_file"]) && ($_FILES["zip_file"]["error"] == "0") && isset
 	$template		= "vhost-template";
 	$template_out_path	= "create-vhost";
 	$pendingCertID		= $_POST["pendingCertID"];
+	$certfile		= unset($certfile); // Clear the sucker
 
 	echo "<pre>";
-	echo "PendingCertID: " .$_POST["pendingCertID"]. "<br />";
-	echo "Create vhost: " .$_POST["createvhost"]. "<br />";
-	echo "Upload: " . $_FILES["zip_file"]["name"] . "<br>";
-	echo "Browser sent file as: " . $_FILES["zip_file"]["type"] . "<br>";
-	echo "Size: " . ($_FILES["zip_file"]["size"] / 1024) . " kB<br>";
-	echo "Temp file: " . $_FILES["zip_file"]["tmp_name"] . "<br>";
+	if ($DEBUG) echo "PendingCertID: " .$_POST["pendingCertID"]. "<br />";
+	if ($DEBUG) echo "Create vhost: " .$_POST["createvhost"]. "<br />";
+	if ($DEBUG) echo "Upload: " . $_FILES["zip_file"]["name"] . "<br>";
+	if ($DEBUG) echo "Browser sent file as: " . $_FILES["zip_file"]["type"] . "<br>";
+	if ($DEBUG) echo "Size: " . ($_FILES["zip_file"]["size"] / 1024) . " kB<br>";
+	if ($DEBUG) echo "Temp file: " . $_FILES["zip_file"]["tmp_name"] . "<br>";
 	// now we find real mimetype as $_FILES["zip_file"]["type"] trusts the browser that sends the file.
 	$finfo = finfo_open(FILEINFO_MIME_TYPE);
 	$real_type = finfo_file($finfo, $_FILES["zip_file"]["tmp_name"]);
 	finfo_close($finfo);
-	echo "File MIME type: " . $real_type . "<br />";
+	if ($DEBUG) echo "File MIME type: " . $real_type . "<br />";
 
 	// now we have the file info check the file for further processing
 	if (in_array($real_type, $accepted_types) && ($size < $max_size) && in_array($extension, $allowedExts)) {
-		echo "Hooray, the file passed mime type, size and ext validation!<br />";
+		if ($DEBUG) echo "Hooray, the file passed mime type, size and ext validation!<br />";
 		if (file_exists($target_path . $name)) {
 		        echo $name . " already exists. <br />";
 		} else {
 		        if (move_uploaded_file($tmp_file, $target_path . $name)) {
-		                echo "Stored in: " . $target_path . $name . "<br />";
+		                if ($DEBUG) echo "Stored in: " . $target_path . $name . "<br />";
                                 // Lets unzip this sucker
                                 $za = new ZipArchive();
                                 $za->open($target_path.$name, ZipArchive::CHECKCONS);
                                 if ($za == TRUE) {
-                                        echo "Zipfile opened<br />";
-                                        echo "Zipfile contains ".$za->numFiles." files<br />";
+                                        if ($DEBUG) echo "Zipfile opened<br />";
+                                        if ($DEBUG) echo "Zipfile contains ".$za->numFiles." files<br />";
                                         for($i = 0; $i < $za->numFiles; $i++) {   
                                                 echo '   '.$za->getNameIndex($i) . '<br />';
                                                 // Guess the certificate file
@@ -73,20 +75,24 @@ if (isset($_FILES["zip_file"]) && ($_FILES["zip_file"]["error"] == "0") && isset
                                                 } elseif ($za->getNameIndex($i) == $prefix.".crt") {
                                                         $certfile = $za->getNameIndex($i);
                                                         echo "Guessing that the cert file is: " . $certfile . "<br />";
-                                                } else {
-                                                        echo "Could not guess the cert filename!<br />Tried ".$prefix.".cer and ".$prefix.".crt<br />";
                                                 }
                                         }
+                                        // Check if we found a cert
+                                        if ( !isset($certfile) ) {
+                                               echo "Could not guess the cert filename!<br />Tried ".$prefix.".cer and ".$prefix.".crt<br />";
+                                               exit;
+                                        }
+                                        
                                         if (file_exists($target_path.$prefix)) {
                                                 echo "Folder ".$target_path.$prefix." exists, unzip cancelled!<br />";
                                                 //echo "Removing Zipfile: ".$name."<br />";
                                                 //unlink($target_path.$name);                                        
                                         } else {
-                                                echo "Extracting to ".$target_path.$prefix."<br />";
+                                                if ($DEBUG) echo "Extracting to ".$target_path.$prefix."<br />";
                                                 $za->extractTo($target_path.$prefix);
-                                                echo "Closing zipfile<br />";
+                                                if ($DEBUG) echo "Closing zipfile<br />";
                                                 $za->close();
-                                                echo "Removing Zipfile: ".$name."<br /><hr>";
+                                                if ($DEBUG) echo "Removing Zipfile: ".$name."<br /><hr>";
                                                 unlink($target_path.$name);
                                                 // Verify that the uploaded cert and the chosen CSR and key matches
                                                 // Open database
@@ -111,7 +117,7 @@ if (isset($_FILES["zip_file"]) && ($_FILES["zip_file"]["error"] == "0") && isset
                                         }
                                 } else {
                                         echo "Error opening: ".$target_path.$name."<br />";
-                                        print_r($za);
+                                        if ($DEBUG) print_r($za);
                                 }
                                 unset($za);
                         } else {
@@ -130,7 +136,7 @@ if (isset($_FILES["zip_file"]) && ($_FILES["zip_file"]["error"] == "0") && isset
 	  }
 	  
         } else {
-          echo "Do not create vhost.";
+          echo "No vhost creation ordered.";
         }
 
         echo "</pre>";
@@ -283,7 +289,7 @@ function display_crt_info( $crt ) 	// display some certificate info
     $validFrom = date('Y-m-d H:i:s', $data['validFrom_time_t']);
     $validTo = date('Y-m-d H:i:s', $data['validTo_time_t']);            
     $altnames = ( isset($data["extensions"]["subjectAltName"]) ? $data["extensions"]["subjectAltName"] : "None" );
-    echo "<br />----------Cert Info-------------------------<br />";
+    echo "<pre><br />----------Cert Info-------------------------<br />";
     echo "CommonName: " . $CN . "<br />";
     echo "Country: " . $C . "<br />";
     echo "State: " . $ST . "<br />";
@@ -297,7 +303,7 @@ function display_crt_info( $crt ) 	// display some certificate info
     echo "----------Issuer---------------------------<br />";
     echo "Issuer Organization: " . $iO . "<br />";
     echo "Issuer Country: " . $iC . "<br />";
-    echo "<hr>";
+    echo "</pre><hr>";
   }
 }
 function package_cert(&$dbconn, $id, $root_path, $cert_file_name)	// puts all the parts of the cert into ssl-certs/domain_dk folder. Zips it all and password protects the zip. 
