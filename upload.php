@@ -356,12 +356,21 @@ function package_cert(&$dbconn, $id, $root_path, $cert_file_name)	// puts all th
       return false;
     }
     
+    // Make a PKCS12 file of the cert and place it in the zip_path so it is compressed with the others.
+    $export_cert	= file_get_contents($zip_path.$cert_file_name);
+    $export_export_file	= $zip_path.$cn_underscored.".pfx";
+    $export_key		= file_get_contents($zip_path.$cn_underscored.".key");
+    
+    if ( !export_to_pkcs12($export_cert. $export_export_file, $export_key) ) {
+      echo "<br />ERROR exporting to PKCS12!";
+    }
+    
     // Zip the files
     $zip_file_name = $cn_underscored . ".zip";
     if ( !zip_files_in_folder($zip_path, $zip_file_name) ) {
       echo "<br />ERROR Zipping files!";
     } else {
-      // Update uoloaddate and zipfileurl in DB
+      // Update uploaddate and zipfileurl in DB
       $baseurl = "http" . (($_SERVER['SERVER_PORT']==443) ? "s://" : "://") . $_SERVER['HTTP_HOST'];
       $uploaddate = date("Y-m-d H:i:s");
       $zipfileurl = $zip_path.$zip_file_name;
@@ -561,17 +570,47 @@ function create_vhost($prefix, $vhost_template_file, $base_dir, $out_dir, $proxy
   return true;
 }
 
-function export_to_pkcs12()
+function generatePassword($length) {		//Read more: http://jaspreetchahal.org/php-random-password-generator-function/#ixzz2bNWUQWhw
+  $lowercase = "qwertyuiopasdfghjklzxcvbnm";
+  $uppercase = "ASDFGHJKLZXCVBNMQWERTYUIOP";
+  $numbers = "1234567890";
+  $specialcharacters = "{}[];:,./<>?_+~!@#";
+  $randomCode = "";
+  mt_srand(crc32(microtime()));
+  $max = strlen($lowercase) - 1;
+  for ($x = 0; $x < abs($length/3); $x++) {
+    $randomCode .= $lowercase{mt_rand(0, $max)};
+  }
+  $max = strlen($uppercase) - 1;
+  for ($x = 0; $x < abs($length/3); $x++) {
+    $randomCode .= $uppercase{mt_rand(0, $max)};
+  }
+  $max = strlen($specialcharacters) - 1;
+  for ($x = 0; $x < abs($length/3); $x++) {
+    $randomCode .= $specialcharacters{mt_rand(0, $max)};
+  }
+  $max = strlen($numbers) - 1;
+  for ($x = 0; $x < abs($length/3); $x++) {
+    $randomCode .= $numbers{mt_rand(0, $max)};
+  }
+  return str_shuffle($randomCode);
+}
+function export_to_pkcs12($cert, $export_file, $key)
 {
-  $testcert = file_get_contents("./certs/star.dandomain.dk.crt");
-  $testkey = file_get_contents("./certs/star.dandomain.dk.key");
-  $ca_bundle = file_get_contents("./certs/ca-bundle.pem");
-  $pass = "afjleriVar4";
-  $array = array(
-  "extracerts" => $ca_bundle,
-  "friendly_name" => "dandomain.dk wildcard",
+  //$testcert = file_get_contents("./certs/star.dandomain.dk.crt");
+  //$testkey = file_get_contents("./certs/star.dandomain.dk.key");
+  //$ca_bundle = file_get_contents("./certs/ca-bundle.pem");
+  $pass = generatePassword("12");
+  $extra_args = array(
+  //  "extracerts" => $ca_bundle,
+    "friendly_name" => "dandomain.dk wildcard",
   );
-  openssl_pkcs12_export_to_file($testcert, "star_dandomain_dk.pfx", $testkey, $pass, $array);
-    
+  if ( openssl_pkcs12_export_to_file($cert, $export_file , $key, $pass, $extra_args) ) {
+    echo "<br />Export successful with password: $pass";
+    return true;
+  } else {
+    echo "<br />ERROR:export_to_pkcs12 failed to export certificate!"
+    return false;
+  }
 }
 ?>
