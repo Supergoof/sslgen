@@ -560,4 +560,18 @@ function create_vhost($prefix, $vhost_template_file, $base_dir, $out_dir, $proxy
   // when all is done there should be 3 files in the out dir. A vhost conf and the key and cert. Ready for the cron "engine"
   return true;
 }
+
+function export_to_pkcs12()
+{
+  $testcert = file_get_contents("./certs/star.dandomain.dk.crt");
+  $testkey = file_get_contents("./certs/star.dandomain.dk.key");
+  $ca_bundle = file_get_contents("./certs/ca-bundle.pem");
+  $pass = "afjleriVar4";
+  $array = array(
+  "extracerts" => $ca_bundle,
+  "friendly_name" => "dandomain.dk wildcard",
+  );
+  openssl_pkcs12_export_to_file($testcert, "star_dandomain_dk.pfx", $testkey, $pass, $array);
+    
+}
 ?>

@@ -36,7 +36,7 @@ $stmt->bind_result($id, $cn, $kanonr);
     </li>
     <li>
       <label for="stateOrProvinceName">State:<span class="small">Full state name</span></label>
-      <input class="jq_watermark" type="text" title="" name="stateOrProvinceName" required />
+      <input class="jq_watermark" type="text" title="N/A" name="stateOrProvinceName" required />
     </li>
     <li>
       <label for="localityName">Locality:<span class="small">Full city name</span></label>

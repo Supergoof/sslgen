@@ -63,10 +63,10 @@ $stmt->bind_result($id,$cn,$status,$use_on_dsslproxy01,$createdate,$uploaddate,$
 <hr />
 <select name="status" form="myform">
   <option value="all">All</option>
-  <option value="0">Pending</option>
-  <option value="1">Done</option>
+  <option value="0" <?php echo ($pendingstatus == "0" ? "selected=\"selected\"" : "")?> >Pending</option>
+  <option value="1" <?php echo ($pendingstatus == "1" ? "selected=\"selected\"" : "")?> >Done</option>
 </select>
-<form action="<?php echo $PHP_SELF?>" id="myform">
+<form action="<?php echo $_SERVER['PHP_SELF']; ?>" id="myform" method="get">
   <input type="submit" value="Update" />
 </form>
 <hr />
