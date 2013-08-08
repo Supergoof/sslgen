@@ -94,7 +94,7 @@ if (!empty($_POST)) {
   echo $csrout . "\n";
   
   // Show the private key
-  echo $privKey . "\n";
+  // echo $privKey . "\n";
   
   // Save private key to file
   openssl_pkey_export_to_file($privKey,"./certs/$commonName.key");

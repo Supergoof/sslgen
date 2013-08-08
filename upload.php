@@ -93,7 +93,7 @@ if (isset($_FILES["zip_file"]) && ($_FILES["zip_file"]["error"] == "0") && isset
                                                 $za->extractTo($target_path.$prefix);
                                                 if ($DEBUG) echo "Closing zipfile<br />";
                                                 $za->close();
-                                                if ($DEBUG) echo "Removing Zipfile: ".$name."<br /><hr>";
+                                                if ($DEBUG) echo "Removing Zipfile: ".$name."<br />";
                                                 unlink($target_path.$name);
                                                 // Verify that the uploaded cert and the chosen CSR and key matches
                                                 // Open database
@@ -137,7 +137,7 @@ if (isset($_FILES["zip_file"]) && ($_FILES["zip_file"]["error"] == "0") && isset
 	  }
 	  
         } else {
-          echo "No vhost creation ordered.";
+          echo "<br />No vhost creation ordered.";
         }
 
         echo "</pre>";
@@ -238,7 +238,7 @@ function verify($cert, $csr, $key)	// verify modulus md5 of cert, key and csr. R
 
 function get_csr_and_pk_from_db( &$dbconn, $id )	// get the csr and pk from db connection $dbconn entry with id = $id. Returns array with (csr,pk)
 {
-  echo "<br /><b>Get data back from DB</b><br />";
+  //echo "<br /><b>Get data back from DB</b><br />";
   if (!($stmt = $dbconn->prepare("SELECT cn,csr,pk FROM `certstor` WHERE `id` = ?"))) {
     echo "<br /><b>Prepare failed: (" . $dbconn->errno . ") " . $dbconn->error . "</b>";
   }	
@@ -307,9 +307,9 @@ function display_crt_info( $crt ) 	// display some certificate info
     echo "</pre><hr>";
   }
 }
-function package_cert(&$dbconn, $id, $root_path, $cert_file_name)	// puts all the parts of the cert into ssl-certs/domain_dk folder. Zips it all and password protects the zip. 
+function package_cert(&$dbconn, $id, $root_path, $cert_file_name)	// puts all the parts of the cert into ssl-certs/domain_dk folder. Zips it all
 {									// then it inserts the DL url in the DB and inserts the upload_date in the DB
-  echo "<br /><hr><b>Pack the cert for download</b>";
+  echo "<br /><b>Pack the cert for download</b>";
   // Get data from DB
   if (!($stmt = $dbconn->prepare("SELECT cn,csr,pk FROM `certstor` WHERE `id` = ?"))) {
     echo "<br /><b>Prepare failed: (" . $dbconn->errno . ") " . $dbconn->error . "</b>";
@@ -349,7 +349,7 @@ function package_cert(&$dbconn, $id, $root_path, $cert_file_name)	// puts all th
     echo "<br />ERROR: cound not find Certificate at: " . $zip_path.$cert_file_name ;
     return false;
   } else {
-    echo "<br />Found Cert :-)";
+    //echo "<br />Found Cert :-)";
     // put key in folder
     if ( !openssl_pkey_export_to_file($fromdb_pk, $zip_path.$cn_underscored.".key") ) {
       echo "<br />ERROR: failed to export key to file: " . $zip_path.$cn_underscored.".key";
@@ -361,7 +361,7 @@ function package_cert(&$dbconn, $id, $root_path, $cert_file_name)	// puts all th
     $export_export_file	= $zip_path.$cn_underscored.".pfx";
     $export_key		= file_get_contents($zip_path.$cn_underscored.".key");
     
-    if ( !export_to_pkcs12($export_cert. $export_export_file, $export_key) ) {
+    if ( !export_to_pkcs12($export_cert, $export_export_file, $export_key) ) {
       echo "<br />ERROR exporting to PKCS12!";
     }
     
@@ -398,7 +398,7 @@ function package_cert(&$dbconn, $id, $root_path, $cert_file_name)	// puts all th
       closelog();
     }
   }
-  echo "<hr>";
+  //echo "<hr>";
   
   return true;
 }
@@ -603,13 +603,13 @@ function export_to_pkcs12($cert, $export_file, $key)
   $pass = generatePassword("12");
   $extra_args = array(
   //  "extracerts" => $ca_bundle,
-    "friendly_name" => "dandomain.dk wildcard",
+    "friendly_name" => "dandomain certificate",
   );
-  if ( openssl_pkcs12_export_to_file($cert, $export_file , $key, $pass, $extra_args) ) {
-    echo "<br />Export successful with password: $pass";
+  if ( openssl_pkcs12_export_to_file($cert, $export_file , $key, $pass) ) {
+    echo "<br />PKCS12(pfx) Export successful with password:<br /><h2>$pass</h2>";
     return true;
   } else {
-    echo "<br />ERROR:export_to_pkcs12 failed to export certificate!"
+    echo "<br />ERROR:export_to_pkcs12 failed to export certificate!";
     return false;
   }
 }
